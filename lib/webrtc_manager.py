@@ -1,6 +1,5 @@
 import asyncio
 from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer
-from pymitter import EventEmitter
 import json
 
 
