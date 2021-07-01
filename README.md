@@ -59,3 +59,6 @@ Once you have everything up and running it is time to either play with the [exam
 ### Issues so far
 
 When a Node.js peer (using wrtc) is polite (reciever), all works well. But when the Node.js peer is the offerer (we are polite), the data channel never opens. This issue doesn't occur when Python clients are connecting to each other
+
+
+Installing aiortc on Aarch64 might require needing to do the following steps https://github.com/PyAV-Org/PyAV/issues/619#issuecomment-765639402
