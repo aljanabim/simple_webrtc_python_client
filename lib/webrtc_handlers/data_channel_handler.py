@@ -22,4 +22,4 @@ def data_channel_handler(our_peer_id, our_peer_type, peers, peer_id):
 
     @channel.on("message")
     def on_message(message):
-        print(peer_id, "says", message)
+        print(peer_id, "says:", message)
