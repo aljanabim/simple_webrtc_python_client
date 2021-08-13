@@ -2,7 +2,7 @@ import asyncio
 from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer, VideoStreamTrack
 from aiortc.contrib.media import MediaPlayer, MediaRecorder, MediaRelay
 import platform
-import cv2
+# import cv2
 
 class WebrtcManager():
     """
