@@ -73,7 +73,7 @@ class SignalingChannel():
             if(self.verbose):
                 print("Connected to signaling server with id",
                       self.socket.sid)
-            await self.socket.emit("ready", (self.peer_id, self.peer_type))
+            await self.socket.emit("ready", (self.peer_id, self.peer_type, False))
 
         @socket.event
         def disconnect():

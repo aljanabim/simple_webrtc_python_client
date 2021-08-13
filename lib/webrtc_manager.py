@@ -1,7 +1,5 @@
 import asyncio
 from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer
-import json
-
 
 class WebrtcManager():
     """
@@ -41,8 +39,8 @@ class WebrtcManager():
         # print('Message give to manager', message)
         _from = message.get("from")
         payload = message.get("payload")
-        action, connections, be_polite, sdp, ice = payload.get("action"), payload.get(
-            "connections"), payload.get("bePolite"), payload.get("sdp"), payload.get("ice")
+        action, connections, be_polite, sdp, ice, trickle = payload.get("action"), payload.get(
+            "connections"), payload.get("bePolite"), payload.get("sdp"), payload.get("ice"), payload.get("trickle")
 
         if(action == "open"):
             for new_peer in connections:
@@ -208,8 +206,7 @@ class WebrtcManager():
                                                 candidate.get("priority"),
                                                 candidate.get("protocol"),
                                                 candidate.get("type"),
-                                                candidate.get(
-                                                    "relatedAddress"),
+                                                candidate.get("relatedAddress"),
                                                 candidate.get("relatedPort"),
                                                 candidate.get("sdpMid"),
                                                 candidate.get("sdpMLineIndex"),
