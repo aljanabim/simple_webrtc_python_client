@@ -1,5 +1,6 @@
 # Simple WebRTC Python Client
 
+
 WebRTC is an evolving technology for peer-to-peer communication on the web. This repository demonstrates how this technology can be used to establish a peer connection from a Python instance. The networking topology is based on a [meshed network](https://webrtcglossary.com/mesh/). Any successful WebRTC connection requires a signaling server for the peers to exchange ICE candidates and session description protocol (SDP). The WebRTC client in this repository is compatible with the signaling server created in the following [repository](https://github.com/aljanabim/simple_webrtc_signaling_server).
 
 #### Table of Contents
