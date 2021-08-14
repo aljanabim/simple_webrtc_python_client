@@ -190,12 +190,14 @@ class WebrtcManager():
             else:
                 # Otherwise there are no collision and we can take the offer as our remote description
                 await peerConnection.setRemoteDescription(rtc_decription)
-                if(self.options.get("enableRemoteStream")):
-                    self.update_remote_streams(peer)
+                # if(self.options.get("enableRemoteStream")):
+                    # self.update_remote_streams(peer)
 
                 # if(self.options.get('enableRemoteStream')):
                     # await peer.get('remoteStream').start()
             if(description["type"] == 'offer'):
+                if(self.options.get('enableLocalStream')):
+                    self.update_local_streams(peer)
                 await peerConnection.setLocalDescription(await peerConnection.createAnswer())
                 if(self.verbose):
                     print("Sending answer to {}".format(peer["peerId"]))
