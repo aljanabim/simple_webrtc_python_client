@@ -2,6 +2,7 @@ import asyncio
 from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer, VideoStreamTrack
 from aiortc.contrib.media import MediaPlayer, MediaRecorder, MediaRelay
 import platform
+from .media_handlers import StreamViewer
 # import cv2
 
 class WebrtcManager():
@@ -122,14 +123,14 @@ class WebrtcManager():
                 # self.update_local_stream(self.peers[peer_id])
             if self.options.get('enableRemoteStream'):
                 peer = self.peers[peer_id]
-                peer['remoteStream'] = MediaRecorder(peer_id+'.mp4')
+                peer['remoteStream'] = StreamViewer(peer_id+'.mp4')
                 peerConnection = peer.get('rtcPeerConnection')
+                peerConnection.addTransceiver('video', direction = 'sendrecv');
+                peerConnection.addTransceiver('audio', direction = 'sendrecv');
                 @peerConnection.on('track')
                 def on_track(track):
                     peer['remoteStream'].addTrack(track)
                     print('### Got this track', track)
-                # peerConnection.addTransceiver('video', direction = 'sendrecv');
-                # peerConnection.addTransceiver('audio', direction = 'sendrecv');
 
 
             await self.update_negotiation_logic(self.peers[peer_id])
@@ -266,7 +267,8 @@ class WebrtcManager():
         peerConnection = peer.get('rtcPeerConnection')
 
         # Create local track
-        options = {"framerate": "30", "video_size": "640x480"}
+        # options = {"framerate": "30", "video_size": "640x480"}
+        options = {"video_size": "640x480"}
 
         if platform.system() == "Darwin":
                 webcam = MediaPlayer(
@@ -278,17 +280,17 @@ class WebrtcManager():
             )
         else:
             webcam = MediaPlayer("/dev/video0", format="v4l2", options=options)
-        relay = MediaRelay()
-        video = relay.subscribe(webcam.video)
-        # audio = None
+        # relay = MediaRelay()
+        # video = relay.subscribe(webcam.video)
+        audio = None
         # print("looking for trans")
-        # for t in peerConnection.getTransceivers():
-            # print(t)
-            # if t.kind == "audio" and audio:
-                # peerConnection.addTrack(audio)
-            # elif t.kind == "video" and video:
-                # peerConnection.addTrack(video)
-        peerConnection.addTrack(video)
+        for t in peerConnection.getTransceivers():
+            print(t)
+            if t.kind == "audio" and audio:
+                peerConnection.addTrack(audio)
+            elif t.kind == "video" and webcam.video:
+                peerConnection.addTrack(webcam.video)
+        # peerConnection.addTrack(webcam.video)
 
 
     async def remove_peer(self, peer):

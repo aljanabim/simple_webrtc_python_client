@@ -34,14 +34,14 @@ PEER_TYPE = "admin"
 channel = SignalingChannel(PEER_ID, PEER_TYPE, SIGNALING_SERVER_URL, TOKEN)
 webrtcOptions = {"enableDataChannel": True,
                  "enableLocalStream": True,
-                 "enableRemoteStream": True,
+                 "enableRemoteStream": False,
                  "dataChannelHandler": data_channel_handler}
 
-# if PEER_ID == "Right":
-    # webrtcOptions = {"enableDataChannel": True,
-                     # "enableLocalStream": False,
-                     # "enableRemoteStream": True,
-                     # "dataChannelHandler": data_channel_handler}
+if PEER_ID == "Right":
+    webrtcOptions = {"enableDataChannel": True,
+                     "enableLocalStream": False,
+                     "enableRemoteStream": True,
+                     "dataChannelHandler": data_channel_handler}
 
 manager = WebrtcManager(PEER_ID, PEER_TYPE, channel,
                         webrtcOptions, verbose=True)
