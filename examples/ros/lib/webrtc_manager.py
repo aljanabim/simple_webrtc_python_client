@@ -120,8 +120,14 @@ class WebrtcManager():
                         # "Something with the data_channel_handler initialization went wrong")
             # if(self.options.get("enableLocalStream")):
                 # self.update_local_stream(self.peers[peer_id])
-            # if self.options.get('enableRemoteStream'):
-                # peerConnection = self.peers[peer_id].get('rtcPeerConnection')
+            if self.options.get('enableRemoteStream'):
+                peer = self.peers[peer_id]
+                peer['remoteStream'] = MediaRecorder(peer_id+'.mp4')
+                peerConnection = peer.get('rtcPeerConnection')
+                @peerConnection.on('track')
+                def on_track(track):
+                    peer['remoteStream'].addTrack(track)
+                    print('### Got this track', track)
                 # peerConnection.addTransceiver('video', direction = 'sendrecv');
                 # peerConnection.addTransceiver('audio', direction = 'sendrecv');
 
@@ -190,8 +196,9 @@ class WebrtcManager():
             else:
                 # Otherwise there are no collision and we can take the offer as our remote description
                 await peerConnection.setRemoteDescription(rtc_decription)
-                # if(self.options.get("enableRemoteStream")):
-                    # self.update_remote_streams(peer)
+                if(peer.get('remoteStream')):
+                    print("this is the remote stream",peer.get('remoteStream'))
+                    await peer.get('remoteStream').start()
 
                 # if(self.options.get('enableRemoteStream')):
                     # await peer.get('remoteStream').start()
@@ -238,14 +245,14 @@ class WebrtcManager():
             if(not peer["ignoreOffer"]):
                 print("Something related to addIceCandidate went wrong")
 
-    def update_remote_streams(self, peer):
-        print("Updating remote stream")
-        peerConnection = peer.get('rtcPeerConnection')
-        peer['remoteStream'] = MediaRecorder(peer.get("peerId")+'_video.mp4')
-        @peerConnection.on("track")
-        def on_track(track):
-            print("Receiving %s" % dir(track))
-            peer.get('remoteStream').addTrack(track)
+    # def update_remote_streams(self, peer):
+        # print("Updating remote stream")
+        # peerConnection = peer.get('rtcPeerConnection')
+        # peer['remoteStream'] = MediaRecorder(peer.get("peerId")+'_video.mp4')
+        # @peerConnection.on("track")
+        # def on_track(track):
+            # print("Receiving %s" % dir(track))
+            # peer.get('remoteStream').addTrack(track)
             # remote_relay.subscribe(track)
             # frame = await track.recv()
             # print(dir(frame))
