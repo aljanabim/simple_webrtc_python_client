@@ -141,8 +141,9 @@ class WebrtcManager():
 
         try:
             if(not peer["polite"]):
-                self.update_local_stream(peer)
                 peer["makingOffer"] = True
+                if(self.options.get('enableLocalStream')):
+                    self.update_local_streams(peer)
                 offer = await peerConnection.createOffer()
                 await peerConnection.setLocalDescription(offer)
                 if(self.verbose):
@@ -190,7 +191,7 @@ class WebrtcManager():
                 # Otherwise there are no collision and we can take the offer as our remote description
                 await peerConnection.setRemoteDescription(rtc_decription)
                 if(self.options.get("enableRemoteStream")):
-                    self.update_remote_stream(peer)
+                    self.update_remote_streams(peer)
 
                 # if(self.options.get('enableRemoteStream')):
                     # await peer.get('remoteStream').start()
@@ -235,7 +236,7 @@ class WebrtcManager():
             if(not peer["ignoreOffer"]):
                 print("Something related to addIceCandidate went wrong")
 
-    def update_remote_stream(self, peer):
+    def update_remote_streams(self, peer):
         print("Updating remote stream")
         peerConnection = peer.get('rtcPeerConnection')
         peer['remoteStream'] = MediaRecorder(peer.get("peerId")+'_video.mp4')
@@ -251,7 +252,8 @@ class WebrtcManager():
             # print(frame)
 
 
-    def update_local_stream(self, peer):
+    def update_local_streams(self, peer):
+        print("Updating local streams")
         peerConnection = peer.get('rtcPeerConnection')
 
         # Create local track
