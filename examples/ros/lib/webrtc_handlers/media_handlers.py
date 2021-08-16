@@ -92,7 +92,6 @@ class StreamViewer:
             try:
                 frame = await track.recv()
 
-                print(frame)
 
                 pil_image = frame.to_image().convert('RGB')
                 open_cv_image = np.array(pil_image)
@@ -101,7 +100,6 @@ class StreamViewer:
 
                 cv2.imshow('peer', open_cv_image)
                 cv2.waitKey(1)
-                # print(frame.to_ndarray())
             except MediaStreamError:
                 return
             # for packet in context.stream.encode(frame):

@@ -95,8 +95,12 @@ class WebrtcManager():
                 "polite": polite,
                 "rtcPeerConnection": RTCPeerConnection(config),
                 "dataChannel": None,
-                "stream": None,
+                "localStream": None,
+                "localVideoStream": None,
+                "localAudioStream": None,
                 "remoteStream": None,
+                "remoteVideoStream": None,
+                "remoteAudioStream": None,
                 "makingOffer": False,
                 "ignoreOffer": False,
                 "isSettingRemoteAnswerPending": False,
@@ -118,8 +122,6 @@ class WebrtcManager():
                 # except:
                     # print(
                         # "Something with the data_channel_handler initialization went wrong")
-            # if(self.options.get("enableLocalStream")):
-                # self.update_local_stream(self.peers[peer_id])
             self.update_streams_logic(self.peers[peer_id])
 
 
@@ -156,11 +158,47 @@ class WebrtcManager():
             
 
         if self.options.get('enableRemoteStream'):
-            peer['remoteStream'] = StreamViewer(peer['peerId']+".mp4")
-            print(peer['remoteStream'])
+            peer['remoteVideoStream'] = StreamViewer(peer['peerId']+".mp4")
+            print(peer['remoteVideoStream'])
             @peerConnection.on('track')
             def on_track(track):
-                peer['remoteStream'].addTrack(track)
+                peer['remoteVideoStream'].addTrack(track)
+
+    def update_local_streams(self, peer):
+        """
+        Handles the local stream by creating a media source for camera devices and adds the to the peerConnection transceivers
+
+        Args:
+            peer (dict): Data about the peer. Containes ["peerId"(string), "peerId" (string),"peerType" (string),"polite" (bool),"rtcPeerConnection" (RTCPeerConnection),"dataChannel" (RTCDataChannel),"makingOffer" (bool),"ignoreOffer" (bool),"isSettingRemoteAnswerPending" (bool)]
+        """
+        peerConnection = peer.get('rtcPeerConnection')
+
+        # Create local track
+        # options = {"framerate": "30", "video_size": "640x480"}
+        options = {"video_size": "640x480"}
+
+        if platform.system() == "Darwin":
+                webcam = MediaPlayer(
+                "default:none", format="avfoundation", options=options
+            )
+        elif platform.system() == "Windows":
+            webcam = MediaPlayer(
+                "video=Integrated Camera", format="dshow", options=options
+            )
+        else:
+            webcam = MediaPlayer("/dev/video1", format="v4l2", options=options)
+        peer['localVideoStream'] = webcam.video
+        # relay = MediaRelay()
+        # video = relay.subscribe(webcam.video)
+        audio = None
+        # print("looking for trans")
+        for t in peerConnection.getTransceivers():
+            print(t)
+            if t.kind == "audio" and audio:
+                peerConnection.addTrack(audio)
+            elif t.kind == "video" and webcam.video:
+                peerConnection.addTrack(webcam.video)
+        # peerConnection.addTrack(webcam.video)
 
 
     async def update_negotiation_logic(self, peer):
@@ -223,12 +261,10 @@ class WebrtcManager():
             else:
                 # Otherwise there are no collision and we can take the offer as our remote description
                 await peerConnection.setRemoteDescription(rtc_decription)
-                if(peer.get('remoteStream')):
-                    print("### STARTING REMOTE STREAM this is the remote stream",peer.get('remoteStream'))
-                    await peer.get('remoteStream').start()
+                if(peer.get('remoteVideoStream')):
+                    print("### STARTING REMOTE STREAM this is the remote stream",peer.get('remoteVideoStream'))
+                    await peer.get('remoteVideoStream').start()
 
-                # if(self.options.get('enableRemoteStream')):
-                    # await peer.get('remoteStream').start()
             if(description["type"] == 'offer'):
                 # if(self.options.get('enableLocalStream')):
                     # self.update_local_streams(peer)
@@ -272,51 +308,6 @@ class WebrtcManager():
             if(not peer["ignoreOffer"]):
                 print("Something related to addIceCandidate went wrong")
 
-    # def update_remote_streams(self, peer):
-        # print("Updating remote stream")
-        # peerConnection = peer.get('rtcPeerConnection')
-        # peer['remoteStream'] = MediaRecorder(peer.get("peerId")+'_video.mp4')
-        # @peerConnection.on("track")
-        # def on_track(track):
-            # print("Receiving %s" % dir(track))
-            # peer.get('remoteStream').addTrack(track)
-            # remote_relay.subscribe(track)
-            # frame = await track.recv()
-            # print(dir(frame))
-            # print(frame.to_ndarray())
-            # cv2.imshow("video", frame)
-            # print(frame)
-
-
-    def update_local_streams(self, peer):
-        print("Updating local streams")
-        peerConnection = peer.get('rtcPeerConnection')
-
-        # Create local track
-        # options = {"framerate": "30", "video_size": "640x480"}
-        options = {"video_size": "640x480"}
-
-        if platform.system() == "Darwin":
-                webcam = MediaPlayer(
-                "default:none", format="avfoundation", options=options
-            )
-        elif platform.system() == "Windows":
-            webcam = MediaPlayer(
-                "video=Integrated Camera", format="dshow", options=options
-            )
-        else:
-            webcam = MediaPlayer("/dev/video1", format="v4l2", options=options)
-        # relay = MediaRelay()
-        # video = relay.subscribe(webcam.video)
-        audio = None
-        # print("looking for trans")
-        for t in peerConnection.getTransceivers():
-            print(t)
-            if t.kind == "audio" and audio:
-                peerConnection.addTrack(audio)
-            elif t.kind == "video" and webcam.video:
-                peerConnection.addTrack(webcam.video)
-        # peerConnection.addTrack(webcam.video)
 
 
     async def remove_peer(self, peer):
@@ -326,10 +317,23 @@ class WebrtcManager():
         Args:
             peer (dict): Data about the peer. Containes ["peerId"(string), "peerId" (string),"peerType" (string),"polite" (bool),"rtcPeerConnection" (RTCPeerConnection),"dataChannel" (RTCDataChannel),"makingOffer" (bool),"ignoreOffer" (bool),"isSettingRemoteAnswerPending" (bool)]
         """
+        # Close data channel
         if(peer.get('dataChannel')):
             peer["dataChannel"].close()
-        if(peer.get('remoteStream')):
-            await peer["remoteStream"].stop()
+
+        # Close local streams
+        if(peer.get('localVideoStream')):
+            await peer["localVideoStream"].stop()
+        if(peer.get('localAudioStream')):
+            await peer["localAudioStream"].stop()
+
+        # Close remote streams
+        if(peer.get('remoteVideoStream')):
+            await peer["remoteVideoStream"].stop()
+        if(peer.get('remoteAudioStream')):
+            await peer["remoteAudioStream"].stop()
+
+        # Close and remove connection
         await peer["rtcPeerConnection"].close()
         del self.peers[peer["peerId"]]
         if(self.verbose):
