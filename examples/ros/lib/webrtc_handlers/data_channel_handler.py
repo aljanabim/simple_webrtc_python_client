@@ -1,20 +1,31 @@
 import asyncio
+import queue
+from numpy import string_
 import rospy
+from svea_msgs.msg import lli_ctrl
 from std_msgs.msg import String 
 from .ros_handler import RosHandler, Topic
 from pymitter import EventEmitter
 from io import BytesIO
+
+q = queue.SimpleQueue()
+
+async def start(channel):
+    while True:
+        if not q.empty():
+            msg = q.get()
+            if channel and channel.readyState == "open":
+                channel.send(msg)
+        await asyncio.sleep(1e-5)
 
 def message_serializor(msg):
         buff = BytesIO()
         msg.serialize(buff)
         return buff.getvalue()
 
-def cb(channel,ee, msg):
-    print(msg)
-    # serialized_msg = message_serializor(msg)
-    # channel.send("hej")
-    # ee.emit("send", "hej")
+def cb(msg):
+    serialized_msg = message_serializor(msg)
+    q.put(serialized_msg)
 
 def data_channel_handler(our_peer_id, our_peer_type, peers, peer_id):
     """
@@ -29,12 +40,13 @@ def data_channel_handler(our_peer_id, our_peer_type, peers, peer_id):
     peer = peers.get(peer_id)
     channel = peer.get('dataChannel')
     topics_to_send = [Topic("chatter", String)]
-    ee = EventEmitter()
-    @ee.on("send")
-    def on_send(msg):
-        if(channel.readyState == "open"):
-            channel.send(msg)
+    # ee = EventEmitter()
+    # @ee.on("send")
+    # def on_send(msg):
+        # if(channel.readyState == "open"):
+            # channel.send(msg)
 
+    rospy.Subscriber('/svea1/lli/ctrl_request', lli_ctrl, cb)
     # event_loop = asyncio.get_running_loop()
 
     # ros_handler = RosHandler(our_peer_id, peer_id, channel, asyncio.get_running_loop(), topics_to_send)
@@ -53,4 +65,6 @@ def data_channel_handler(our_peer_id, our_peer_type, peers, peer_id):
         print(peer_id, "says", message)
 
     # ros_handler._init_and_spin_ros()
-    rospy.Subscriber('/Right/chatter', String, lambda msg: cb(channel, ee, msg))
+    # rospy.Subscriber('/Right/chatter', String, lambda msg: cb(channel, ee, msg))
+    asyncio.Task(start(channel))
+
