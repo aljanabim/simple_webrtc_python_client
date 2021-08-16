@@ -1,12 +1,3 @@
-import platform
-if platform.release() == '4.15.0-142-generic':
-    import sys
-    sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages') # in order to import cv2 under python3
-    import cv2
-    sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages') # append back in order to import rospy
-else:
-    import cv2
-
 import asyncio
 from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer, VideoStreamTrack
 from aiortc.contrib.media import MediaPlayer, MediaRecorder, MediaRelay
@@ -129,19 +120,48 @@ class WebrtcManager():
                         # "Something with the data_channel_handler initialization went wrong")
             # if(self.options.get("enableLocalStream")):
                 # self.update_local_stream(self.peers[peer_id])
-            if self.options.get('enableRemoteStream'):
-                peer = self.peers[peer_id]
-                peer['remoteStream'] = StreamViewer(peer_id+'.mp4')
-                peerConnection = peer.get('rtcPeerConnection')
-                peerConnection.addTransceiver('video', direction = 'sendrecv');
-                peerConnection.addTransceiver('audio', direction = 'sendrecv');
-                @peerConnection.on('track')
-                def on_track(track):
-                    peer['remoteStream'].addTrack(track)
-                    print('### Got this track', track)
+            self.update_streams_logic(self.peers[peer_id])
 
 
             await self.update_negotiation_logic(self.peers[peer_id])
+
+    def update_streams_logic(self, peer):
+        """
+        Updates the local and remote media streams according to the preferences set in options.
+
+        Args:
+            peer (dict): Data about the peer. Containes ["peerId"(string), "peerId" (string),"peerType" (string),"polite" (bool),"rtcPeerConnection" (RTCPeerConnection),"dataChannel" (RTCDataChannel),"makingOffer" (bool),"ignoreOffer" (bool),"isSettingRemoteAnswerPending" (bool)]
+        """
+        peerConnection = peer.get('rtcPeerConnection')
+
+        # Get direction of transceivers
+        direction = ""
+        if self.options.get('enableLocalStream') and self.options.get('enableRemoteStream'):
+            direction = "sendrecv"
+        elif self.options.get('enableLocalStream'):
+            direction = "sendonly"
+        elif self.options.get('enableRemoteStream'):
+            direction = "recvonly"
+        else:
+            direction = "inactive"
+
+        # Add transceivers to peer connection
+        if self.options.get('enableLocalStream') or self.options.get('enableRemoteStream'):
+            peerConnection.addTransceiver('video', direction)
+            peerConnection.addTransceiver('audio', direction)
+
+        # Activate streams and recorders based on preferences
+        if self.options.get('enableLocalStream'):
+            self.update_local_streams(peer)
+            
+
+        if self.options.get('enableRemoteStream'):
+            peer['remoteStream'] = StreamViewer(peer['peerId']+".mp4")
+            print(peer['remoteStream'])
+            @peerConnection.on('track')
+            def on_track(track):
+                peer['remoteStream'].addTrack(track)
+
 
     async def update_negotiation_logic(self, peer):
         """
@@ -157,8 +177,6 @@ class WebrtcManager():
         try:
             if(not peer["polite"]):
                 peer["makingOffer"] = True
-                if(self.options.get('enableLocalStream')):
-                    self.update_local_streams(peer)
                 offer = await peerConnection.createOffer()
                 await peerConnection.setLocalDescription(offer)
                 if(self.verbose):
@@ -206,14 +224,14 @@ class WebrtcManager():
                 # Otherwise there are no collision and we can take the offer as our remote description
                 await peerConnection.setRemoteDescription(rtc_decription)
                 if(peer.get('remoteStream')):
-                    print("this is the remote stream",peer.get('remoteStream'))
+                    print("### STARTING REMOTE STREAM this is the remote stream",peer.get('remoteStream'))
                     await peer.get('remoteStream').start()
 
                 # if(self.options.get('enableRemoteStream')):
                     # await peer.get('remoteStream').start()
             if(description["type"] == 'offer'):
-                if(self.options.get('enableLocalStream')):
-                    self.update_local_streams(peer)
+                # if(self.options.get('enableLocalStream')):
+                    # self.update_local_streams(peer)
                 await peerConnection.setLocalDescription(await peerConnection.createAnswer())
                 if(self.verbose):
                     print("Sending answer to {}".format(peer["peerId"]))
@@ -310,6 +328,8 @@ class WebrtcManager():
         """
         if(peer.get('dataChannel')):
             peer["dataChannel"].close()
+        if(peer.get('remoteStream')):
+            await peer["remoteStream"].stop()
         await peer["rtcPeerConnection"].close()
         del self.peers[peer["peerId"]]
         if(self.verbose):
