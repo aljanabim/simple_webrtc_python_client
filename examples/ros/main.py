@@ -33,8 +33,9 @@ PEER_TYPE = "admin"
 # SETUP SIGNALING CHANNEL AND WEBRTC
 channel = SignalingChannel(PEER_ID, PEER_TYPE, SIGNALING_SERVER_URL, TOKEN)
 webrtcOptions = {"enableDataChannel": True,
-                 "enableLocalStream": True,
-                 "enableRemoteStream": True,
+                 "enableLocalStream": True, # set to True if we want to send our feed to the peer
+                 "enableRemoteStream": True, # set to True if we want to accept an incoming feed from peer
+                 "cameraDevice": "/dev/video1", # for Linux "/dev/video#" where # is the number of the active video device
                  "dataChannelHandler": data_channel_handler}
 
 manager = WebrtcManager(PEER_ID, PEER_TYPE, channel,

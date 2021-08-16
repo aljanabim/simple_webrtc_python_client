@@ -186,19 +186,22 @@ class WebrtcManager():
                 "video=Integrated Camera", format="dshow", options=options
             )
         else:
-            webcam = MediaPlayer("/dev/video1", format="v4l2", options=options)
-        peer['localVideoStream'] = webcam.video
+            if self.options.get('cameraDevice'):
+                webcam = MediaPlayer(self.options.get('cameraDevice'), format="v4l2", options=options)
+            else:
+                webcam = None
+                
+        if(webcam):
+            peer['localVideoStream'] = webcam.video
         # relay = MediaRelay()
         # video = relay.subscribe(webcam.video)
         audio = None
-        # print("looking for trans")
         for t in peerConnection.getTransceivers():
             print(t)
             if t.kind == "audio" and audio:
                 peerConnection.addTrack(audio)
-            elif t.kind == "video" and webcam.video:
+            elif t.kind == "video" and webcam and webcam.video:
                 peerConnection.addTrack(webcam.video)
-        # peerConnection.addTrack(webcam.video)
 
 
     async def update_negotiation_logic(self, peer):
