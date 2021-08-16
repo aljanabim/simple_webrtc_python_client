@@ -37,12 +37,6 @@ webrtcOptions = {"enableDataChannel": True,
                  "enableRemoteStream": True,
                  "dataChannelHandler": data_channel_handler}
 
-if PEER_ID == "Right":
-    webrtcOptions = {"enableDataChannel": True,
-                     "enableLocalStream": False,
-                     "enableRemoteStream": True,
-                     "dataChannelHandler": data_channel_handler}
-
 manager = WebrtcManager(PEER_ID, PEER_TYPE, channel,
                         webrtcOptions, verbose=True)
 
