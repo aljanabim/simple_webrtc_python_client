@@ -287,7 +287,7 @@ class WebrtcManager():
                 "video=Integrated Camera", format="dshow", options=options
             )
         else:
-            webcam = MediaPlayer("/dev/video0", format="v4l2", options=options)
+            webcam = MediaPlayer("/dev/video1", format="v4l2", options=options)
         # relay = MediaRelay()
         # video = relay.subscribe(webcam.video)
         audio = None
