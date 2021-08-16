@@ -85,6 +85,8 @@ class StreamViewer:
             try:
                 frame = await track.recv()
 
+                print(frame)
+
                 pil_image = frame.to_image().convert('RGB')
                 open_cv_image = np.array(pil_image)
                 # Convert RGB to BGR

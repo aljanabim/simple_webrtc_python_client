@@ -11,7 +11,7 @@ import asyncio
 from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer, VideoStreamTrack
 from aiortc.contrib.media import MediaPlayer, MediaRecorder, MediaRelay
 import platform
-from .media_handlers import StreamViewer
+from .webrtc_handlers.media_handlers import StreamViewer
 
 class WebrtcManager():
     """
