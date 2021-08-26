@@ -1,8 +1,15 @@
 #!/usr/bin/env python
+import platform
+if platform.release() == '4.9.140-tegra':
+    import sys
+    sys.path.append('/usr/lib/python2.7/dist-packages') # in order to import cv2 under python3
+    import rospy
+    sys.path.remove('/usr/lib/python2.7/dist-packages') # append back in order to import rospy
+else:
+    import rospy
 import asyncio
 from dataclasses import dataclass
 from io import BytesIO
-import rospy
 from threading import Thread
 from dataclasses import dataclass
 from typing import Any

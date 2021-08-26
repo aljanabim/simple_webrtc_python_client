@@ -1,11 +1,17 @@
+import platform
+if platform.release() == '4.9.140-tegra':
+    import sys
+    sys.path.append('/usr/lib/python2.7/dist-packages') # in order to import cv2 under python3
+    import rospy
+    sys.path.remove('/usr/lib/python2.7/dist-packages') # append back in order to import rospy
+else:
+    import rospy
+
 import asyncio
 import queue
-from numpy import string_
-import rospy
 from svea_msgs.msg import lli_ctrl
 from std_msgs.msg import String 
 from .ros_handler import RosHandler, Topic
-from pymitter import EventEmitter
 from io import BytesIO
 
 q = queue.SimpleQueue()
