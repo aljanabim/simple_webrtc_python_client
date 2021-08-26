@@ -8,7 +8,7 @@ from .ros_handler import RosHandler, Topic
 from pymitter import EventEmitter
 from io import BytesIO
 
-q = queue.SimpleQueue()
+q = queue.Queue(maxsize=10)
 
 async def start(channel):
     while True:
