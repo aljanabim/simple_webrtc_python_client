@@ -12,7 +12,7 @@ import queue
 from svea_msgs.msg import lli_ctrl
 from std_msgs.msg import String 
 from .ros_handler import RosHandler, Topic
-from io import BytesIO
+from io import BytesIO, StringIO
 
 q = queue.Queue(maxsize=10)
 
@@ -22,7 +22,7 @@ async def start(channel):
             msg = q.get()
             if channel and channel.readyState == "open":
                 channel.send(msg)
-        await asyncio.sleep(1e-5)
+        await asyncio.sleep(1e-4) # 1e-5 causes CPU to take 100% usage of one of the cores
 
 def message_serializor(msg):
         buff = BytesIO()
@@ -31,7 +31,8 @@ def message_serializor(msg):
 
 def cb(msg):
     serialized_msg = message_serializor(msg)
-    q.put(serialized_msg)
+    # print(serialized_msg)
+    q.put_nowait(serialized_msg)
 
 def data_channel_handler(our_peer_id, our_peer_type, peers, peer_id):
     """
@@ -45,22 +46,15 @@ def data_channel_handler(our_peer_id, our_peer_type, peers, peer_id):
     """
     peer = peers.get(peer_id)
     channel = peer.get('dataChannel')
-    topics_to_send = [Topic("chatter", String)]
-    # ee = EventEmitter()
-    # @ee.on("send")
-    # def on_send(msg):
-        # if(channel.readyState == "open"):
-            # channel.send(msg)
+    # topics_to_send = [Topic("chatter", String)]
 
     rospy.Subscriber('/svea1/lli/ctrl_request', lli_ctrl, cb)
-    # event_loop = asyncio.get_running_loop()
-
     # ros_handler = RosHandler(our_peer_id, peer_id, channel, asyncio.get_running_loop(), topics_to_send)
 
     @channel.on("open")
     def on_open():
         print("Data channel with", peer_id, "is open")
-        channel.send("Hello from {}".format(our_peer_id))
+        # channel.send("Hello from {}".format(our_peer_id))
 
     @channel.on("close")
     def on_close():
