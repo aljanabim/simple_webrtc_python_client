@@ -53,6 +53,7 @@ def data_channel_handler(our_peer_id, our_peer_type, peers, peer_id):
             # channel.send(msg)
 
     rospy.Subscriber('/svea1/lli/ctrl_request', lli_ctrl, cb)
+    pub = rospy.Publisher(f"/{our_peer_id}/lli/ctrl_request", lli_ctrl, queue_size=10)
     # event_loop = asyncio.get_running_loop()
 
     # ros_handler = RosHandler(our_peer_id, peer_id, channel, asyncio.get_running_loop(), topics_to_send)
@@ -60,7 +61,7 @@ def data_channel_handler(our_peer_id, our_peer_type, peers, peer_id):
     @channel.on("open")
     def on_open():
         print("Data channel with", peer_id, "is open")
-        channel.send("Hello from {}".format(our_peer_id))
+        # channel.send("Hello from {}".format(our_peer_id))
 
     @channel.on("close")
     def on_close():
@@ -68,7 +69,10 @@ def data_channel_handler(our_peer_id, our_peer_type, peers, peer_id):
 
     @channel.on("message")
     def on_message(message):
-        print(peer_id, "says", message)
+        # print(message, message[0:4])
+        pub.publish(lli_ctrl().deserialize(message))
+        # print(lli_ctrl().deserialize(message))
+        # print(peer_id, "says", message)
 
     # ros_handler._init_and_spin_ros()
     # rospy.Subscriber('/Right/chatter', String, lambda msg: cb(channel, ee, msg))
